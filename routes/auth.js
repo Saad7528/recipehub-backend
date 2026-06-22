@@ -6,6 +6,22 @@ import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
+const isProd = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/",
+};
+
+const clearCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+};
+
 // GET /api/auth/me
 router.get("/me", async (req, res) => {
   try {
@@ -21,12 +37,12 @@ router.get("/me", async (req, res) => {
 
     const user = await User.findById(payload.userId);
     if (!user) {
-      res.clearCookie("token", { httpOnly: true, secure: false, sameSite: "lax", path: "/" });
+      res.clearCookie("token", clearCookieOptions);
       return res.json({ user: null });
     }
 
     if (user.isBlocked) {
-      res.clearCookie("token", { httpOnly: true, secure: false, sameSite: "lax", path: "/" });
+      res.clearCookie("token", clearCookieOptions);
       return res.status(403).json({ error: "Account is blocked" });
     }
 
@@ -116,13 +132,7 @@ router.post("/login", async (req, res) => {
       role: user.role,
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false, // Let cookies work on localhost cross-port
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
+    res.cookie("token", token, cookieOptions);
 
     return res.json({
       message: "Login successful",
@@ -180,13 +190,7 @@ router.post("/google", async (req, res) => {
       role: user.role,
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
+    res.cookie("token", token, cookieOptions);
 
     return res.json({
       message: "Google Login successful",
@@ -207,12 +211,7 @@ router.post("/google", async (req, res) => {
 
 // POST /api/auth/logout
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-    path: "/",
-  });
+  res.clearCookie("token", clearCookieOptions);
   return res.json({ message: "Logged out successfully" });
 });
 
