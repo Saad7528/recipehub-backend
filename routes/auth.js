@@ -6,20 +6,29 @@ import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-const isProd = process.env.NODE_ENV === "production";
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: "/",
+const getCookieOptions = (req) => {
+  const origin = req.headers.origin || "";
+  const host = req.headers.host || "";
+  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  return {
+    httpOnly: true,
+    secure: !isLocal,
+    sameSite: isLocal ? "lax" : "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: "/",
+  };
 };
 
-const clearCookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-  path: "/",
+const getClearCookieOptions = (req) => {
+  const origin = req.headers.origin || "";
+  const host = req.headers.host || "";
+  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  return {
+    httpOnly: true,
+    secure: !isLocal,
+    sameSite: isLocal ? "lax" : "none",
+    path: "/",
+  };
 };
 
 // GET /api/auth/me
@@ -37,12 +46,12 @@ router.get("/me", async (req, res) => {
 
     const user = await User.findById(payload.userId);
     if (!user) {
-      res.clearCookie("token", clearCookieOptions);
+      res.clearCookie("token", getClearCookieOptions(req));
       return res.json({ user: null });
     }
 
     if (user.isBlocked) {
-      res.clearCookie("token", clearCookieOptions);
+      res.clearCookie("token", getClearCookieOptions(req));
       return res.status(403).json({ error: "Account is blocked" });
     }
 
@@ -132,7 +141,7 @@ router.post("/login", async (req, res) => {
       role: user.role,
     });
 
-    res.cookie("token", token, cookieOptions);
+    res.cookie("token", token, getCookieOptions(req));
 
     return res.json({
       message: "Login successful",
@@ -190,7 +199,7 @@ router.post("/google", async (req, res) => {
       role: user.role,
     });
 
-    res.cookie("token", token, cookieOptions);
+    res.cookie("token", token, getCookieOptions(req));
 
     return res.json({
       message: "Google Login successful",
@@ -211,7 +220,7 @@ router.post("/google", async (req, res) => {
 
 // POST /api/auth/logout
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", clearCookieOptions);
+  res.clearCookie("token", getClearCookieOptions(req));
   return res.json({ message: "Logged out successfully" });
 });
 

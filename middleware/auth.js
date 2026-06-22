@@ -1,12 +1,16 @@
 import { verifyToken } from "../utils/jwt.js";
 import User from "../models/User.js";
 
-const isProd = process.env.NODE_ENV === "production";
-const clearCookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-  path: "/",
+const getClearCookieOptions = (req) => {
+  const origin = req.headers.origin || "";
+  const host = req.headers.host || "";
+  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  return {
+    httpOnly: true,
+    secure: !isLocal,
+    sameSite: isLocal ? "lax" : "none",
+    path: "/",
+  };
 };
 
 export async function authenticate(req, res, next) {
@@ -23,12 +27,12 @@ export async function authenticate(req, res, next) {
 
     const user = await User.findById(payload.userId);
     if (!user) {
-      res.clearCookie("token", clearCookieOptions);
+      res.clearCookie("token", getClearCookieOptions(req));
       return res.status(401).json({ error: "User not found" });
     }
 
     if (user.isBlocked) {
-      res.clearCookie("token", clearCookieOptions);
+      res.clearCookie("token", getClearCookieOptions(req));
       return res.status(403).json({ error: "Account is blocked" });
     }
 
