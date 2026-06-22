@@ -38,25 +38,13 @@ app.use(cookieParser());
 // CORS configuration to support cross-origin cookie sharing
 const allowedOrigins = [
   CLIENT_URL,
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://recipehub-frontend-alpha.vercel.app"
 ];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, postman, etc.)
-      if (!origin) return callback(null, true);
-      
-      const isAllowed = allowedOrigins.includes(origin) || 
-                        origin.endsWith(".vercel.app") || 
-                        origin === "http://localhost:3000";
-      
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "stripe-signature"],
