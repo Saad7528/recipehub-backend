@@ -7,26 +7,22 @@ import { authenticate } from "../middleware/auth.js";
 const router = express.Router();
 
 const getCookieOptions = (req) => {
-  const origin = req.headers.origin || "";
-  const host = req.headers.host || "";
-  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
   return {
     httpOnly: true,
-    secure: !isLocal,
-    sameSite: isLocal ? "lax" : "none",
+    secure: isSecure,
+    sameSite: isSecure ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   };
 };
 
 const getClearCookieOptions = (req) => {
-  const origin = req.headers.origin || "";
-  const host = req.headers.host || "";
-  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
   return {
     httpOnly: true,
-    secure: !isLocal,
-    sameSite: isLocal ? "lax" : "none",
+    secure: isSecure,
+    sameSite: isSecure ? "none" : "lax",
     path: "/",
   };
 };

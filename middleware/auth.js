@@ -2,13 +2,11 @@ import { verifyToken } from "../utils/jwt.js";
 import User from "../models/User.js";
 
 const getClearCookieOptions = (req) => {
-  const origin = req.headers.origin || "";
-  const host = req.headers.host || "";
-  const isLocal = origin.includes("localhost") || host.includes("localhost");
+  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
   return {
     httpOnly: true,
-    secure: !isLocal,
-    sameSite: isLocal ? "lax" : "none",
+    secure: isSecure,
+    sameSite: isSecure ? "none" : "lax",
     path: "/",
   };
 };
