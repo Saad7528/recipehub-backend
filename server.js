@@ -38,10 +38,12 @@ app.use(cookieParser());
 
 // CORS configuration to support cross-origin cookie sharing
 const allowedOrigins = [
-  CLIENT_URL,
   "http://localhost:3000",
   "https://recipehub-frontend-alpha.vercel.app"
 ];
+if (CLIENT_URL && !allowedOrigins.includes(CLIENT_URL)) {
+  allowedOrigins.push(CLIENT_URL);
+}
 
 app.use(
   cors({
@@ -68,6 +70,10 @@ app.get("/", (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+export default app;
